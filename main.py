@@ -30,7 +30,7 @@ DEEPSEEK_API_KEY = config.get("DEEPSEEK_API_KEY")  # Ensure correct key name
 if not DEEPSEEK_API_KEY:
     raise ValueError("❌ ERROR: DeepSeek API key is missing in config.json.")
 
-DEEPSEEK_ENDPOINT = "https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-3B"
+LLAMA_ENDPOINT = "https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-3B"
 
 # Request Model for Queries
 class QueryRequest(BaseModel):
@@ -56,12 +56,9 @@ def chat_with_bot(request: QueryRequest):
     payload = {"inputs": request.query}
 
     try:
-        response = requests.post(DEEPSEEK_ENDPOINT, headers=headers, json=payload)
+        response = requests.post(LLAMA_ENDPOINT, headers=headers, json=payload)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
         raise HTTPException(status_code=500, detail=f"DeepSeek API error: {str(e)}")
 
-@app.get("/about")
-def xyz():
-    return {"data" : "about page"}
