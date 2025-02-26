@@ -1,12 +1,13 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import json
-import requests
 from fastapi.middleware.cors import CORSMiddleware
+from huggingface_hub import InferenceClient
 
-
-
+# Initialize FastAPI App
 app = FastAPI()
+
+# Enable CORS for frontend communication
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,7 +15,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # Load Config & Responses
 try:
@@ -25,12 +25,16 @@ try:
 except FileNotFoundError:
     raise ValueError("❌ ERROR: Required JSON files (config.json, responses.json) are missing.")
 
-# API Key
-LLAMA_API_KEY = config.get("DEEPSEEK_API_KEY")  # Ensure correct key name
-if not LLAMA_API_KEY:
+# API Key & Model Setup
+DEEPSEEK_API_KEY = config.get("DEEPSEEK_API_KEY")
+if not DEEPSEEK_API_KEY:
     raise ValueError("❌ ERROR: DeepSeek API key is missing in config.json.")
 
-LLAMA_ENDPOINT = "https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-3B"
+# Initialize Hugging Face InferenceClient for DeepSeek-R1
+client = InferenceClient(
+    provider="together",
+    api_key=DEEPSEEK_API_KEY
+)
 
 # Request Model for Queries
 class QueryRequest(BaseModel):
@@ -46,19 +50,25 @@ def get_config():
 
 @app.post("/ask")
 def ask_question(request: QueryRequest):
+    """Return predefined responses from responses.json if available."""
     query = request.query.lower()
     response = responses.get(query, "Sorry, I don’t have an answer for that.")
     return {"query": query, "response": response}
 
 @app.post("/chat")
 def chat_with_bot(request: QueryRequest):
-    headers = {"Authorization": f"Bearer {LLAMA_API_KEY}"}
-    payload = {"inputs": request.query}
-
+    """Use DeepSeek-R1 via Hugging Face InferenceClient for AI responses."""
     try:
-        response = requests.post(LLAMA_ENDPOINT, headers=headers, json=payload)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"DeepSeek API error: {str(e)}")
+        messages = [{"role": "user", "content": request.query}]
 
+        completion = client.chat.completions.create(
+            model="deepseek-ai/DeepSeek-R1",
+            messages=messages,
+            max_tokens=500
+        )
+
+        ai_response = completion.choices[0].message if completion.choices else "No response received."
+        return {"query": request.query, "response": ai_response}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"DeepSeek API error: {str(e)}")
