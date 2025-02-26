@@ -26,8 +26,8 @@ except FileNotFoundError:
     raise ValueError("❌ ERROR: Required JSON files (config.json, responses.json) are missing.")
 
 # API Key
-DEEPSEEK_API_KEY = config.get("DEEPSEEK_API_KEY")  # Ensure correct key name
-if not DEEPSEEK_API_KEY:
+LLAMA_API_KEY = config.get("DEEPSEEK_API_KEY")  # Ensure correct key name
+if not LLAMA_API_KEY:
     raise ValueError("❌ ERROR: DeepSeek API key is missing in config.json.")
 
 LLAMA_ENDPOINT = "https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-3B"
@@ -52,7 +52,7 @@ def ask_question(request: QueryRequest):
 
 @app.post("/chat")
 def chat_with_bot(request: QueryRequest):
-    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}"}
+    headers = {"Authorization": f"Bearer {LLAMA_API_KEY}"}
     payload = {"inputs": request.query}
 
     try:
