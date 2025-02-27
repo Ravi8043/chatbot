@@ -64,7 +64,9 @@ def chat_with_bot(request: QueryRequest):
         completion = client.chat.completions.create(
             model="deepseek-ai/DeepSeek-R1",
             messages=messages,
-            max_tokens=500
+            max_tokens=500,
+            temperature = 0.7,
+            top_p=0.9
         )
 
         ai_response = completion.choices[0].message if completion.choices else "No response received."
