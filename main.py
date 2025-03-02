@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+import requests
 import json
 from fastapi.middleware.cors import CORSMiddleware
 from huggingface_hub import InferenceClient
@@ -40,6 +41,38 @@ client = InferenceClient(
 class QueryRequest(BaseModel):
     query: str
 
+
+def get_account_balance(address: str):
+    url = f"https://algoexplorerapi.io/v2/accounts/{address}"
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        data = response.json()
+        return {"address": address, "balance": data.get("amount", "Balance not found")}
+    
+    return {"error": "Failed to fetch account balance"}
+
+
+def get_transaction_history(address: str, limit=5):
+    url = f"https://algoexplorerapi.io/v2/accounts/{address}/transactions?limit={limit}"
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        data = response.json()
+        return {"address": address, "transactions": data.get("transactions", [])}
+    
+    return {"error": "Failed to fetch transactions"}
+
+
+def get_block_info(block_num: int):
+    url = f"https://algoexplorerapi.io/v2/blocks/{block_num}"
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        return response.json()
+    
+    return {"error": "Failed to fetch block info"}
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to Algorand AI Chatbot!"}
@@ -74,3 +107,15 @@ def chat_with_bot(request: QueryRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"DeepSeek API error: {str(e)}")
+
+@app.get("/account/{address}")
+def account_balance(address: str):
+    return get_account_balance(address)
+
+@app.get("/transactions/{address}")
+def transaction_history(address: str, limit: int = 5):
+    return get_transaction_history(address, limit)
+
+@app.get("/block/{block_num}")
+def block_info(block_num: int):
+    return get_block_info(block_num)
