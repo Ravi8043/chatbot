@@ -24,12 +24,12 @@ try:
     with open("responses.json", "r") as f:
         responses = json.load(f)
 except FileNotFoundError:
-    raise ValueError("❌ ERROR: Required JSON files (config.json, responses.json) are missing.")
+    raise ValueError("ERROR: Required JSON files (config.json, responses.json) are missing.")
 
 # API Key & Model Setup
 DEEPSEEK_API_KEY = config.get("DEEPSEEK_API_KEY")
 if not DEEPSEEK_API_KEY:
-    raise ValueError("❌ ERROR: DeepSeek API key is missing in config.json.")
+    raise ValueError("ERROR: DeepSeek API key is missing in config.json.")
 
 # Initialize Hugging Face InferenceClient for DeepSeek-R1
 client = InferenceClient(
