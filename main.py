@@ -43,7 +43,7 @@ class QueryRequest(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to Algorand AI Chatbot!"}
+    return {"message": "Welcome to AI Chatbot!"}
 
 @app.get("/config")
 def get_config():
